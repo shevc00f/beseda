@@ -999,7 +999,11 @@ ${data.sickLeave || '__'} больничный лист.
     return (
         <div className="min-h-screen bg-gray-900 text-white p-4 sm:p-6 lg:p-8">
             <header className="text-center mb-10 no-print">
-                <h1 className="text-4xl font-bold text-white">Генератор отчета</h1>
+                <h1 className="text-4xl font-bold text-white">
+                    Генератор отчета
+                    <span className="text-lg align-baseline font-normal text-gray-400 ml-2">версия 1.0</span>
+                    <span className="text-sm align-baseline font-light text-gray-500 ml-2">by Shevc00f</span>
+                </h1>
                 <p className="text-lg text-gray-400 mt-2">"Беседа по эффективности"</p>
             </header>
             <main className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
