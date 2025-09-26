@@ -428,6 +428,15 @@ const SbsSummaryCard = ({ title, data }: { title: string, data: any[] }) => {
     );
 };
 
+const ReportNoteItem = ({ label, value }: { label: string, value: string }) => (
+    <div>
+        <h4 className="font-semibold text-gray-800 mb-2" style={{ fontSize: '13px' }}>{label}</h4>
+        <p className="text-gray-800 whitespace-pre-wrap leading-relaxed p-4 bg-gray-100 rounded-md border border-gray-200 text-sm">
+            {value || '__'}
+        </p>
+    </div>
+);
+
 const ReportPreview = ({ formData }: { formData: any }) => {
     return (
         <div id="report-content" className="font-sans text-gray-900 bg-white p-6 rounded-lg" style={{ fontSize: '12px' }}>
@@ -575,10 +584,12 @@ const ReportPreview = ({ formData }: { formData: any }) => {
                 </ReportSection>
                 
                 <ReportSection title="Дополнительная информация">
-                    <MetricItem label="Замечания от лаборатории" value={formData.labComments} />
-                    <MetricItem label="Причины простоев" value={formData.downtimeReasons} />
-                    <MetricItem label="Риски" value={formData.risks} />
-                    <MetricItem label="Поручения на смену" value={formData.shiftAssignments} />
+                    <div className="space-y-4">
+                        <ReportNoteItem label="Замечания от лаборатории" value={formData.labComments} />
+                        <ReportNoteItem label="Причины простоев" value={formData.downtimeReasons} />
+                        <ReportNoteItem label="Риски" value={formData.risks} />
+                        <ReportNoteItem label="Поручения на смену" value={formData.shiftAssignments} />
+                    </div>
                 </ReportSection>
                 
                 <div className="mt-8 pt-4 border-t border-gray-300 text-gray-500 space-y-2 italic text-center text-sm">
@@ -1250,10 +1261,10 @@ ${data.sickLeave || '__'} больничный лист.
                                 </div>
                             </div>
                             
-                             {renderTextareaField('labComments', 'Замечания от лаборатории', 'не было')}
-                             {renderTextareaField('downtimeReasons', 'Причины простоев', 'Простоев не было.')}
-                             {renderTextareaField('risks', 'Риски', 'Риски отсутствуют.')}
-                             {renderTextareaField('shiftAssignments', 'Поручения на смену', 'Введите поручения на смену...')}
+                             {renderTextareaField('labComments', 'Замечания от лаборатории', 'не было', 4)}
+                             {renderTextareaField('downtimeReasons', 'Причины простоев', 'Простоев не было.', 4)}
+                             {renderTextareaField('risks', 'Риски', 'Риски отсутствуют.', 4)}
+                             {renderTextareaField('shiftAssignments', 'Поручения на смену', 'Введите поручения на смену...', 4)}
                         </fieldset>
                     </form>
                 </div>
