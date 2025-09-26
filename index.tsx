@@ -436,6 +436,7 @@ const ReportPreview = ({ formData }: { formData: any }) => {
                 <header className="text-center mb-8">
                     <h2 className="font-extrabold text-black" style={{ fontSize: '24px' }}>Беседа по эффективности</h2>
                     <p className="text-gray-500 text-lg">Сменный отчет</p>
+                    <p className="text-gray-500 text-md mt-1">{new Date().toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })}</p>
                 </header>
                 
                 <p className="mb-6 text-gray-500 italic text-center">
@@ -844,7 +845,9 @@ const App = () => {
     };
 
     const generatePlainTextReport = (data: typeof formData) => {
+        const today = new Date().toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
         return `Беседа по эффективности.
+Дата: ${today}
 Здравствуйте, коллеги. Начнем нашу беседу по эффективности с контакта по безопасности. У кого есть чем поделиться?
 Контакт по безопасности: ${data.safetyContact || '__'}
 Поручения за предыдущую смену:
@@ -1002,7 +1005,6 @@ ${data.sickLeave || '__'} больничный лист.
                 <h1 className="text-4xl font-bold text-white">
                     Генератор отчета
                     <span className="text-lg align-baseline font-normal text-gray-400 ml-2">версия 1.0</span>
-                    <span className="text-sm align-baseline font-light text-gray-500 ml-2">by Shevc00f</span>
                 </h1>
                 <p className="text-lg text-gray-400 mt-2">"Беседа по эффективности"</p>
             </header>
