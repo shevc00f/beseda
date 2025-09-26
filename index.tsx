@@ -460,7 +460,7 @@ const ReportPreview = ({ formData }: { formData: any }) => {
                 </ReportSection>
 
                 <div className="grid md:grid-cols-2 gap-x-8 gap-y-4">
-                    <ReportSection title="Безопасность">
+                    <ReportSection title="ОТПБ">
                         <MetricItem label="Травматизм и несчастные случаи" value={formData.injuries} />
                         <MetricItem label="Аварии" value={formData.accidents} />
                         <MetricItem label="Отработали" value={formData.workSafety} />
@@ -487,7 +487,7 @@ const ReportPreview = ({ formData }: { formData: any }) => {
             {/* === PAGE 2 === */}
             <div className="pdf-page print-page-break">
                 <div className="grid md:grid-cols-2 gap-x-8 gap-y-4">
-                    <ReportSection title="Технические показатели">
+                    <ReportSection title="Динамика НТР, НАК, АСУТП, ПАЗ">
                         <MetricItem label="Нарушения НТР (сутки)" value={formData.ntrViolations} />
                         <MetricItem label="Нарушения НАК (сутки)" value={formData.nakViolations} />
                         <MetricItem label="Повторяющиеся события" value={formData.recurringEvents} />
@@ -497,7 +497,7 @@ const ReportPreview = ({ formData }: { formData: any }) => {
                         <MetricItem label="Отключение блокировок" value={formData.blockerOverrides} />
                     </ReportSection>
 
-                    <ReportSection title="Производственные показатели">
+                    <ReportSection title="Расходные нормы, анализы, ЭКОНС">
                         <MetricItem label="Отклонение от расходных норм" value={formData.consumptionDeviation} />
                         <div className="space-y-1">
                             <MetricItem label="АО по Т50 (факт / план)" value={`${formData.aoT50actual || '__'} / ${formData.aoT50plan || '__'}`} />
@@ -544,7 +544,7 @@ const ReportPreview = ({ formData }: { formData: any }) => {
             {/* === PAGE 3 === */}
             <div className="pdf-page print-page-break">
                 <p className="my-6 text-gray-500 italic text-center">
-                    ВИП, ВИТ задают вопросы. Читаю ШПАРГАЛКУ.
+                    ВИП, ВИТ задают вопросы.
                 </p>
 
                 <ReportSection title="Динамика выполнения плана производства СБС">
@@ -578,6 +578,7 @@ const ReportPreview = ({ formData }: { formData: any }) => {
                     <MetricItem label="Замечания от лаборатории" value={formData.labComments} />
                     <MetricItem label="Причины простоев" value={formData.downtimeReasons} />
                     <MetricItem label="Риски" value={formData.risks} />
+                    <MetricItem label="Поручения на смену" value={formData.shiftAssignments} />
                 </ReportSection>
                 
                 <div className="mt-8 pt-4 border-t border-gray-300 text-gray-500 space-y-2 italic text-center text-sm">
@@ -661,6 +662,7 @@ const App = () => {
         labComments: 'не было',
         downtimeReasons: '',
         risks: '',
+        shiftAssignments: '',
     });
 
     const [selectedApi, setSelectedApi] = useState<ApiProvider>('local');
@@ -888,8 +890,6 @@ ${data.sickLeave || '__'} больничный лист.
 Анализы 1/2 тл: К.В.: ${data.analysis12_kv || '__'}; Потери: ${data.analysis12_loss || '__'}; Насыпная плотность: ${data.analysis12_bulk_density || '__'}; Цвет: ${data.analysis12_color || '__'}; Агломерация: ${data.analysis12_agglomeration || '__'}.
 Анализы 3 тл: К.В.: ${data.analysis3_kv || '__'}; Потери: ${data.analysis3_loss || '__'}; Насыпная плотность: ${data.analysis3_bulk_density || '__'}; Цвет: ${data.analysis3_color || '__'}; Агломерация: ${data.analysis3_agglomeration || '__'}.
 
-Читаю ШПАРГАЛКУ.
-
 Наличие не идентифицированных дебалансов и потерь ${data.unidentifiedImbalances}.
 
 Время нахождения в зеленой зоне ${data.greenZoneTime || '__'}%
@@ -907,6 +907,7 @@ ${data.sickLeave || '__'} больничный лист.
 Замечаний от лаборатории по готовой: ${data.labComments || 'не было'}.
 Были простои по причине: ${data.downtimeReasons || '__'}
 Есть риски: ${data.risks || '__'}
+Поручения на смену: ${data.shiftAssignments || '__'}
 Слово ИПРО о наличии сырья и ограничении.
 ВИП ВИТ задают вопросы.
 Слово сменным инженерам.
@@ -925,8 +926,68 @@ ${data.sickLeave || '__'} больничный лист.
         const reportText = generatePlainTextReport(formData);
         const blob = new Blob([reportText], { type: 'text/plain;charset=utf-8' });
         const link = document.createElement('a');
+        const dateString = new Date().toISOString().slice(0, 10);
         link.href = URL.createObjectURL(blob);
-        link.download = 'otchet.txt';
+        link.download = `${dateString}_otchet.txt`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+    };
+
+    const handleSaveAsHtml = () => {
+        const reportContentElement = document.getElementById('report-content');
+        if (!reportContentElement) {
+            console.error('Report content element not found for HTML export.');
+            return;
+        }
+    
+        const reportHtmlContent = reportContentElement.outerHTML;
+    
+        const fullHtml = `
+    <!DOCTYPE html>
+    <html lang="ru">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Генератор отчета по эффективности - Отчет</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+        <style>
+            body {
+                font-family: 'Inter', sans-serif;
+                background-color: #f3f4f6; /* A light gray background */
+                display: flex;
+                justify-content: center;
+                align-items: flex-start;
+                padding: 2rem;
+                min-height: 100vh;
+            }
+            #report-content {
+                width: 100%;
+                max-width: 840px; /* A bit wider to look good */
+                box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            }
+             .print-page-break {
+                border-top: 2px dashed #9ca3af;
+                margin-top: 2rem;
+                padding-top: 2rem;
+            }
+        </style>
+    </head>
+    <body class="bg-gray-100">
+        ${reportHtmlContent}
+    </body>
+    </html>
+        `;
+    
+        const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+        const link = document.createElement('a');
+        const dateString = new Date().toISOString().slice(0, 10);
+        link.href = URL.createObjectURL(blob);
+        link.download = `${dateString}_otchet.html`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -1076,7 +1137,7 @@ ${data.sickLeave || '__'} больничный лист.
                         </fieldset>
 
                         <fieldset className="mb-6">
-                            <legend className="text-xl font-semibold text-white mb-4 border-b border-gray-600 pb-2 w-full">Безопасность и персонал</legend>
+                            <legend className="text-xl font-semibold text-white mb-4 border-b border-gray-600 pb-2 w-full">ОТПБ и персонал</legend>
                             {renderRadioGroup('injuries', 'Травматизм и несчастные случаи', [{value: 'не зарегистрировано', label: 'Не зарегистрировано'}, {value: 'зарегистрировано', label: 'Зарегистрировано'}])}
                             {renderRadioGroup('accidents', 'Аварии', [{value: 'не зарегистрировано', label: 'Не зарегистрировано'}, {value: 'зарегистрировано', label: 'Зарегистрировано'}])}
                             {renderRadioGroup('workSafety', 'Отработали', [{value: 'безопасно', label: 'Безопасно'}, {value: 'не безопасно', label: 'Не безопасно'}])}
@@ -1095,7 +1156,7 @@ ${data.sickLeave || '__'} больничный лист.
                         </fieldset>
 
                         <fieldset className="mb-6">
-                            <legend className="text-xl font-semibold text-white mb-4 border-b border-gray-600 pb-2 w-full">Технические показатели</legend>
+                            <legend className="text-xl font-semibold text-white mb-4 border-b border-gray-600 pb-2 w-full">Динамика НТР, НАК, АСУТП, ПАЗ</legend>
                             <div className="grid grid-cols-2 gap-4">
                                 {renderInputField('ntrViolations', 'Нарушения НТР', '', 'text')}
                                 {renderInputField('nakViolations', 'Нарушения НАК', '', 'text')}
@@ -1111,7 +1172,7 @@ ${data.sickLeave || '__'} больничный лист.
                         </fieldset>
                         
                         <fieldset>
-                             <legend className="text-xl font-semibold text-white mb-4 border-b border-gray-600 pb-2 w-full">Производственные показатели и доп. информация</legend>
+                             <legend className="text-xl font-semibold text-white mb-4 border-b border-gray-600 pb-2 w-full">Расходные нормы, анализы, ЭКОНС</legend>
                              {renderRadioGroup('consumptionDeviation', 'Отклонение от расходных норм', [{value: 'не зарегистрировано', label: 'Не зарегистрировано'}, {value: 'зарегистрировано', label: 'Зарегистрировано'}])}
                              <div className="grid grid-cols-2 gap-4 mb-2">
                                  {renderInputField('aoT50actual', 'АО по Т50 (факт)', '', 'number')}
@@ -1192,6 +1253,7 @@ ${data.sickLeave || '__'} больничный лист.
                              {renderTextareaField('labComments', 'Замечания от лаборатории', 'не было')}
                              {renderTextareaField('downtimeReasons', 'Причины простоев', 'Простоев не было.')}
                              {renderTextareaField('risks', 'Риски', 'Риски отсутствуют.')}
+                             {renderTextareaField('shiftAssignments', 'Поручения на смену', 'Введите поручения на смену...')}
                         </fieldset>
                     </form>
                 </div>
@@ -1203,7 +1265,7 @@ ${data.sickLeave || '__'} больничный лист.
                         <div className="h-[calc(100vh-220px)] overflow-y-auto preview-scroll">
                            <ReportPreview formData={formData} />
                         </div>
-                        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-2 no-print">
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-2 no-print">
                             <button 
                                 onClick={copyToClipboard}
                                 className={`w-full font-bold py-2.5 px-4 rounded-lg transition-all duration-300 text-sm ${copyButtonText === 'Скопировано!' ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-700'}`}
@@ -1215,6 +1277,12 @@ ${data.sickLeave || '__'} больничный лист.
                                 className="w-full font-bold py-2.5 px-4 rounded-lg transition-colors duration-300 text-sm bg-gray-600 hover:bg-gray-700"
                             >
                                 Сохранить в .txt
+                            </button>
+                            <button 
+                                onClick={handleSaveAsHtml}
+                                className="w-full font-bold py-2.5 px-4 rounded-lg transition-colors duration-300 text-sm bg-gray-600 hover:bg-gray-700"
+                            >
+                                Сохранить в .html
                             </button>
                         </div>
                     </div>
