@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenAI } from "@google/genai";
@@ -141,7 +142,7 @@ const ReportSection = ({ title, children, className = '' }: { title: string, chi
     </section>
 );
 
-const MetricItem = ({ label, value }: { label: string, value: string | number }) => (
+const MetricItem: React.FC<{ label: string, value: string | number }> = ({ label, value }) => (
     <div className="flex justify-between items-baseline text-sm">
         <p className="text-gray-600 truncate pr-2">{label}:</p>
         <p className="text-gray-900 font-semibold text-right pl-2">{String(value) || '__'}</p>
@@ -363,65 +364,6 @@ const ReportPreview = ({ formData, customFields }: { formData: any, customFields
     );
 };
 
-const Login = ({ onLogin }: { onLogin: (user: { role: string; name: string }) => void }) => {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
-
-        if (username.trim() === 'Shevc00f' && password === 'Tfmf8udb') {
-            onLogin({ role: 'admin', name: 'Shevc00f' });
-        } else if (password === 'sibur') {
-            onLogin({ role: 'user', name: username.trim() || 'Пользователь' });
-        } else {
-            setError('Неверное имя пользователя или пароль.');
-        }
-    };
-
-    return (
-        <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
-            <div className="w-full max-w-md bg-gray-800 p-8 rounded-xl shadow-2xl border border-gray-700">
-                <h1 className="text-3xl font-bold text-center text-white mb-2">Вход в систему</h1>
-                <p className="text-center text-gray-400 mb-8">Генератор отчета по эффективности</p>
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-4">
-                        <label htmlFor="username" className="block mb-2 text-sm font-medium text-gray-300">Имя пользователя</label>
-                        <input
-                            type="text"
-                            id="username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Введите имя (для обычного входа)"
-                        />
-                    </div>
-                    <div className="mb-6">
-                        <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-300">Пароль</label>
-                        <input
-                            type="password"
-                            id="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="•••••••••"
-                        />
-                    </div>
-                    {error && <p className="text-red-400 text-sm text-center mb-4">{error}</p>}
-                    <button
-                        type="submit"
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg transition-colors"
-                    >
-                        Войти
-                    </button>
-                </form>
-            </div>
-        </div>
-    );
-};
-
 const AddFieldModal = ({ isOpen, onClose, onAddField, sectionId }: { isOpen: boolean, onClose: () => void, onAddField: (sectionId: string, fieldName: string) => void, sectionId: string | null }) => {
     const [fieldName, setFieldName] = useState('');
 
@@ -461,7 +403,7 @@ const AddFieldModal = ({ isOpen, onClose, onAddField, sectionId }: { isOpen: boo
     );
 };
 
-const ReportGenerator = ({ user }: { user: { role: string, name: string } }) => {
+const ReportGenerator = () => {
     const [formConfig, setFormConfig] = useState(initialFormConfig);
     const [formData, setFormData] = useState(() => createInitialFormData(initialFormConfig));
     const [selectedApi, setSelectedApi] = useState<ApiProvider>('local');
@@ -612,6 +554,25 @@ const ReportGenerator = ({ user }: { user: { role: string, name: string } }) => 
         });
     };
     
+    const handleMoveField = (sectionId: string, fieldIndex: number, direction: 'up' | 'down') => {
+        setFormConfig(prevConfig => {
+            return prevConfig.map(section => {
+                if (section.id === sectionId) {
+                    const newFields = [...section.fields];
+                    const targetIndex = direction === 'up' ? fieldIndex - 1 : fieldIndex + 1;
+    
+                    if (targetIndex >= 0 && targetIndex < newFields.length) {
+                        // Swap elements
+                        [newFields[fieldIndex], newFields[targetIndex]] = [newFields[targetIndex], newFields[fieldIndex]];
+                    }
+                    
+                    return { ...section, fields: newFields };
+                }
+                return section;
+            });
+        });
+    };
+
     const openAddFieldModal = (sectionId: string) => {
         setModalSectionId(sectionId);
         setIsModalOpen(true);
@@ -718,9 +679,10 @@ ${data.sickLeave || '__'} больничный лист.
         URL.revokeObjectURL(link.href);
     };
     
-    const renderField = (field: any) => {
+    const renderField = (field: any, index: number, totalFields: number) => {
         const name = field.id as keyof typeof formData;
         const hasError = !!errors[name];
+        const isAdmin = true;
 
         const commonProps = {
             id: field.id, name: field.id,
@@ -732,13 +694,23 @@ ${data.sickLeave || '__'} больничный лист.
 
         const fieldWrapper = (content: React.ReactNode) => (
             <div className={`relative mb-4 ${field.grid || ''}`}>
-                <label htmlFor={field.id} className="block mb-2 text-sm font-medium text-gray-300">{field.label}</label>
+                <label htmlFor={field.id} className="block mb-2 text-sm font-medium text-gray-300 pr-24">{field.label}</label>
                 {content}
                 {hasError && <p className="mt-1 text-sm text-red-400">{errors[name]}</p>}
-                {isAdmin && field.isCustom && (
-                    <button type="button" onClick={() => handleDeleteField(field.sectionId, field.id)} className="absolute top-0 right-0 p-1 text-gray-500 hover:text-red-400" title="Удалить поле">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clipRule="evenodd" /></svg>
-                    </button>
+                {isAdmin && (
+                    <div className="absolute top-0 right-0 flex items-center">
+                        <button type="button" onClick={() => handleMoveField(field.sectionId, index, 'up')} disabled={index === 0} className="p-1 text-gray-400 hover:text-white disabled:text-gray-700 disabled:cursor-not-allowed" title="Переместить вверх">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" /></svg>
+                        </button>
+                        <button type="button" onClick={() => handleMoveField(field.sectionId, index, 'down')} disabled={index === totalFields - 1} className="p-1 text-gray-400 hover:text-white disabled:text-gray-700 disabled:cursor-not-allowed" title="Переместить вниз">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                        </button>
+                        {field.isCustom && (
+                            <button type="button" onClick={() => handleDeleteField(field.sectionId, field.id)} className="p-1 text-gray-400 hover:text-red-400" title="Удалить поле">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clipRule="evenodd" /></svg>
+                            </button>
+                        )}
+                    </div>
                 )}
             </div>
         );
@@ -790,7 +762,7 @@ ${data.sickLeave || '__'} больничный лист.
     };
 
     const isApiKeyMissing = selectedApi !== 'local' && !apiKeys[selectedApi];
-    const isAdmin = user.role === 'admin';
+    const isAdmin = true;
     const customFields = formConfig.flatMap(section => section.fields).filter(field => field.isCustom);
 
     return (
@@ -824,19 +796,20 @@ ${data.sickLeave || '__'} больничный лист.
                             <fieldset key={section.id} className="mb-6">
                                 <legend className="text-xl font-semibold text-white mb-4 border-b border-gray-600 pb-2 w-full">{section.title}</legend>
                                 <div className={section.id === 'otpb' ? "grid grid-cols-2 gap-x-4" : ""}>
-                                    {section.fields.map(field => {
+                                    {section.fields.map((field, index) => {
+                                        const fieldProps = { ...field, sectionId: section.id };
                                         // Special handling for safetyContact button
                                         if (field.id === 'safetyContact') {
                                             return (
                                                 <div className="relative" key={field.id}>
-                                                    {renderField({ ...field, sectionId: section.id })}
+                                                    {renderField(fieldProps, index, section.fields.length)}
                                                     <button type="button" onClick={handleGenerateClick} disabled={isGenerating || isApiKeyMissing} className="absolute bottom-6 right-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-500 text-white font-semibold py-1 px-3 rounded-lg text-sm flex items-center">
                                                         {isGenerating ? 'Генерация...' : '✨ Сгенерировать'}
                                                     </button>
                                                 </div>
                                             );
                                         }
-                                        return renderField({ ...field, sectionId: section.id });
+                                        return <React.Fragment key={field.id || `field-${index}`}>{renderField(fieldProps, index, section.fields.length)}</React.Fragment>;
                                     })}
                                 </div>
                                 {isAdmin && (
@@ -868,17 +841,7 @@ ${data.sickLeave || '__'} больничный лист.
 };
 
 const App = () => {
-    const [user, setUser] = useState<{ role: string; name: string } | null>(null);
-
-    const handleLogin = (loggedInUser: { role: string; name: string }) => {
-        setUser(loggedInUser);
-    };
-
-    if (!user) {
-        return <Login onLogin={handleLogin} />;
-    }
-
-    return <ReportGenerator user={user} />;
+    return <ReportGenerator />;
 };
 
 const container = document.getElementById('root');
